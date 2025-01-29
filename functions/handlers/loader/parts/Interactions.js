@@ -27,10 +27,11 @@ async function Interactions(directory, client) {
         if (interaction && typeof interaction.code === 'function') {
           client.on('interactionCreate', async (interactionInstance) => {
             try {
-              if (
-                interactionInstance.customId === interaction.id
-              ) {
-                await interaction.code(interactionInstance);
+              const customId = interactionInstance.customId;
+              const match = matchCustomId(interaction.id, customId);
+
+              if (match) {
+                await interaction.code(interactionInstance, match);
               }
             } catch (error) {
               console.error(`Error handling interaction: ${interactionInstance.customId}`, error);
@@ -58,6 +59,21 @@ async function Interactions(directory, client) {
   });
 
   return results;
+}
+
+/**
+ * Función para hacer match entre la ID del botón y una interacción recibida
+ * Ejemplo: 
+ * - ID Config: "id-{user}"
+ * - ID Recibida: "id-11841284218"
+ * - Retorna: { user: "11841284218" }
+ */
+function matchCustomId(configId, receivedId) {
+  const pattern = configId.replace(/{(\w+)}/g, '(?<$1>[^-]+)');
+  const regex = new RegExp(`^${pattern}$`);
+  const match = receivedId.match(regex);
+
+  return match ? match.groups : null;
 }
 
 module.exports = Interactions;

@@ -54,7 +54,7 @@ module.exports = {
         }
     },
     Buttons: {
-        Build: Buttons,
         Edit: EditButton.Edit
-    }
+    },
+    Buttons: Buttons
 }

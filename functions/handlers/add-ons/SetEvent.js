@@ -37,6 +37,7 @@ const events = {
   messageReactionRemove: 'messageReactionRemove',
   messageReactionRemoveAll: 'messageReactionRemoveAll',
   messageReactionRemoveEmoji: 'messageReactionRemoveEmoji',
+  messageSnapshots: 'messageSnapshots',
   messageUpdate: 'messageUpdate',
   presenceUpdate: 'presenceUpdate',
   rateLimit: 'rateLimit',
