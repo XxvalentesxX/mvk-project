@@ -61,13 +61,7 @@ async function Interactions(directory, client) {
   return results;
 }
 
-/**
- * Función para hacer match entre la ID del botón y una interacción recibida
- * Ejemplo: 
- * - ID Config: "id-{user}"
- * - ID Recibida: "id-11841284218"
- * - Retorna: { user: "11841284218" }
- */
+
 function matchCustomId(configId, receivedId) {
   const pattern = configId.replace(/{(\w+)}/g, '(?<$1>[^-]+)');
   const regex = new RegExp(`^${pattern}$`);
