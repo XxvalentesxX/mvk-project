@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { newCommand, handleCommand } = require('../../add-ons/SetCommand');
+const Var = require('../../../misc/Var');
 
 async function Commands(directory, client) {
   const absolutePath = path.resolve(directory);
@@ -43,8 +44,18 @@ async function Commands(directory, client) {
   loadFromDir(absolutePath);
 
   client.on('messageCreate', async (message) => {
-    const prefix = client.prefix.toLowerCase();
-    if (!message.content.toLowerCase().startsWith(prefix) || message.author.bot) return;
+    if (message.author.bot || !message.guild) return;
+
+    let prefixes = [client.prefix];
+    if (Var.Exists({ name: 'prefix' })) {
+      const serverPrefixes = Var.Get({ name: 'prefix', type: Var.Type.Server, id: message.guild.id });
+      if (Array.isArray(serverPrefixes) && serverPrefixes.length > 0) {
+        prefixes = serverPrefixes;
+      }
+    }
+
+    const prefix = prefixes.find(p => message.content.toLowerCase().startsWith(p.toLowerCase()));
+    if (!prefix) return;
 
     try {
       await handleCommand(message, prefix);
