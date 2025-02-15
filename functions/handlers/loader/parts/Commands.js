@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { newCommand, handleCommand } = require('../../add-ons/SetCommand');
+const { newCommand, handleCommand, getCommands } = require('../../add-ons/SetCommand');
 const Var = require('../../../misc/Var');
 
 async function Commands(directory, client) {
@@ -57,8 +57,40 @@ async function Commands(directory, client) {
     const prefix = prefixes.find(p => message.content.toLowerCase().startsWith(p.toLowerCase()));
     if (!prefix) return;
 
+    const args = message.content.slice(prefix.length).trim().split(/ +/);
+    const commandName = args.shift().toLowerCase();
+
     try {
-      await handleCommand(message, prefix);
+      const commands = getCommands();
+
+      let foundCommand = null;
+      let dynamicKey = null;
+      let dynamicValue = null;
+
+      for (const cmd of commands) {
+        if (cmd.name.includes('{')) {
+          const matchVar = cmd.name.match(/{(\w+)}/);
+          if (!matchVar) continue;
+
+          dynamicKey = matchVar[1];
+          const regex = new RegExp(`^${cmd.name.replace(/{\w+}/, '(\\w+)')}$`);
+          const match = commandName.match(regex);
+
+          if (match) {
+            foundCommand = cmd;
+            dynamicValue = match[1];
+            break;
+          }
+        } else if (cmd.name.toLowerCase() === commandName) {
+          foundCommand = cmd;
+          break;
+        }
+      }
+
+      if (!foundCommand) return;
+
+      const argsObject = dynamicKey ? { [dynamicKey]: dynamicValue } : {};
+      await foundCommand.code(message, args, argsObject);
     } catch (error) {
       console.error('Error handling command:', error);
     }
