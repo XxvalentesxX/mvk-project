@@ -1,34 +1,51 @@
-const { Collection } = require('discord.js');
-const commands = new Collection();
+const commands = new Map();
 
-function newCommand({ name, aliases = [], code }) {
-  if (!name || !code) {
-    console.error('Command must have a name and code.');
-    return;
-  }
-
-  commands.set(name.toLowerCase(), { code });
-  aliases.forEach(alias => {
-    commands.set(alias.toLowerCase(), { code });
-  });
+function newCommand(command) {
+  if (!command.name) return console.error('Error: El comando debe tener un nombre.');
+  
+  commands.set(command.name, command);
 }
 
 async function handleCommand(message, prefix) {
   const args = message.content.slice(prefix.length).trim().split(/ +/);
   const commandName = args.shift().toLowerCase();
 
-  const command = commands.get(commandName);
+  let foundCommand = null;
+  let dynamicValue = null;
+  let dynamicKey = null;
 
-  if (command) {
-    try {
-      await command.code(message, args);
-    } catch (error) {
-      console.error(`Error executing command ${commandName}:`, error);
+  for (const [name, cmd] of commands) {
+    if (name.includes('{')) {
+      const regex = new RegExp(`^${name.replace(/{(\w+)}/, '(\\w+)')}$`);
+      const match = commandName.match(regex);
+
+      if (match) {
+        foundCommand = cmd;
+        dynamicKey = name.match(/{(\w+)}/)[1];
+        dynamicValue = match[1];
+        break;
+      }
+    } else if (name.toLowerCase() === commandName) {
+      foundCommand = cmd;
+      break;
     }
+  }
+
+  if (!foundCommand) return;
+
+  try {
+    if (dynamicKey && dynamicValue) {
+      await foundCommand.code(message, {}, { [dynamicKey]: dynamicValue });
+    } else {
+      await foundCommand.code(message, {});
+    }
+  } catch (error) {
+    console.error(`Error ejecutando el comando "${foundCommand.name}":`, error);
   }
 }
 
-module.exports = {
-  newCommand,
-  handleCommand
-};
+function getCommands() {
+  return [...commands.values()];
+}
+
+module.exports = { newCommand, handleCommand, getCommands, commands };
